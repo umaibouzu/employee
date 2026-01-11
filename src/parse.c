@@ -9,10 +9,10 @@
 #include "common.h"
 #include "parse.h"
 
-void output_file(int fd, struct dbheader_t * dbhdr, void *something) {
+int output_file(int fd, struct dbheader_t * dbhdr, void *something) {
 	if (fd < 0) {
 		printf("Got a bad FD from the user\n");
-		return;
+		return STATUS_ERROR;
 	}
 
 	dbhdr->magic = htonl(dbhdr->magic);
@@ -24,7 +24,7 @@ void output_file(int fd, struct dbheader_t * dbhdr, void *something) {
 
 	write(fd, dbhdr, sizeof(struct dbheader_t));
 
-	return;
+	return STATUS_SUCCESS;
 }
 
 int create_db_header(struct dbheader_t **headerOut) {
