@@ -12,7 +12,7 @@
 
 void list_employees(struct dbheader_t *dbhdr, struct employee_t *employees) {
 
-	if (dbhdr == NULL) return STATUS_ERROR;
+	if (dbhdr == NULL) return; 
 
 	int i = 0;
 
@@ -22,6 +22,55 @@ void list_employees(struct dbheader_t *dbhdr, struct employee_t *employees) {
 		printf("\tAddress: %s\n", employees[i].address);
 		printf("\tHours: %d\n", employees[i].hours);
 	}
+}
+
+int remove_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *removestring) {
+
+	if (dbhdr == NULL) return STATUS_ERROR;
+	if (employees == NULL) return STATUS_ERROR;
+	if (*employees == NULL) return STATUS_ERROR;
+	if (removestring == NULL) return STATUS_ERROR;
+
+	if (dbhdr->count == 1) {
+		free(*employees);
+		*employees = NULL;
+		dbhdr->count = 0;
+		return STATUS_SUCCESS;
+	}
+
+	struct employee_t *e = *employees;
+	
+	int index = 0;
+	bool found = false;
+
+	for (; index < dbhdr->count; index++) {
+		if (strcmp(e[index].name, removestring) == 0) {
+			found = true;
+			break;
+		}
+	}
+
+	int i = index;
+
+	if (found) {
+		for (; i < dbhdr->count - 1; i++) {
+			e[i] = e[i+1];
+		}
+	}else {
+		printf("No name in database matching: %s\n", removestring);
+		return STATUS_ERROR;
+	}
+
+	e = realloc(e, sizeof(struct employee_t) * (dbhdr->count-1));
+	if (e == NULL) {
+		return STATUS_ERROR;
+	}
+
+	dbhdr->count--;
+
+	*employees = e;
+
+	return STATUS_SUCCESS;
 }
 
 int add_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *addstring) {
@@ -90,9 +139,11 @@ int output_file(int fd, struct dbheader_t *dbhdr, struct employee_t *employees) 
 	}
 
 	int realcount = dbhdr->count;
+	off_t newsize = sizeof(struct dbheader_t) + (sizeof(struct employee_t) * realcount);
 
 	dbhdr->magic = htonl(dbhdr->magic);
-	dbhdr->filesize = htonl(sizeof(struct dbheader_t) + sizeof(struct employee_t) * realcount);
+	//dbhdr->filesize = htonl(sizeof(struct dbheader_t) + sizeof(struct employee_t) * realcount);
+	dbhdr->filesize = htonl(newsize);
 	dbhdr->count = htons(dbhdr->count);
 	dbhdr->version = htons(dbhdr->version);
 
@@ -105,6 +156,11 @@ int output_file(int fd, struct dbheader_t *dbhdr, struct employee_t *employees) 
 	for (; i < realcount; i++) {
 		employees[i].hours = htonl(employees[i].hours);
 		write(fd, &employees[i], sizeof(struct employee_t));
+	}
+
+	if (ftruncate(fd, newsize) == -1) {
+		perror("truncate");
+		return STATUS_ERROR;
 	}
 
 	return STATUS_SUCCESS;

@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
 
 	char *filepath = NULL;
 	char *addstring = NULL;
+	char *removestring = NULL;
 	bool newfile = false;
 	bool list = false;
 	int c;
@@ -28,7 +29,7 @@ int main(int argc, char *argv[]) {
 	struct dbheader_t *dbhdr = NULL;
 	struct employee_t *employees = NULL;
 
-	while ((c = getopt(argc, argv, "nf:a:l")) != -1) {
+	while ((c = getopt(argc, argv, "nf:a:lr:")) != -1) {
 		switch (c) {
 			case 'n':
 				newfile = true;
@@ -41,6 +42,9 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'l':
 				list = true;
+				break;
+			case 'r':
+				removestring = optarg;
 				break;
 			case '?':
 				printf("Unkown option -%c\n", c);
@@ -91,10 +95,16 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	if (removestring != NULL) {
+		if(remove_employee(dbhdr, &employees, removestring) == STATUS_ERROR) {
+			printf("Failed to remove employee from database\n");
+			return -1;
+		}
+	}
+
 	if (list) {
 		list_employees(dbhdr, employees);
 	}
-
 	output_file(dbfd, dbhdr, employees);
 
 	return 0;
