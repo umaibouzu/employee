@@ -24,6 +24,30 @@ void list_employees(struct dbheader_t *dbhdr, struct employee_t *employees) {
 	}
 }
 
+int update_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *updatestring) {
+
+	if (dbhdr == NULL) return STATUS_ERROR;
+
+	char *name =  strtok(updatestring, ",");
+	if (name == NULL) return STATUS_ERROR;
+
+	char *hours = strtok(NULL, ",");
+	if (hours == NULL) return STATUS_ERROR;
+
+	int index = 0;
+
+	for (; index < dbhdr->count; index++) {
+		if (strcmp(employees[index].name, name) == 0) {
+			break;
+		}
+	}
+	
+	employees[index].hours = atoi(hours);
+
+	return STATUS_SUCCESS;
+}
+
+
 int remove_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *removestring) {
 
 	if (dbhdr == NULL) return STATUS_ERROR;

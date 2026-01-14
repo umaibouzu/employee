@@ -11,8 +11,9 @@ void print_usage(char *argv[]) {
 	printf("Usage: %s -n -f <database file>\n", argv[0]);
 	printf("\t -n - create new database file\n");
 	printf("\t -f - (required) path to database file\n");
-	printf("\t -a - add via CSV list of (name,address,salary)\n");
-	printf("\t -r - remove employee via name)\n");
+	printf("\t -a - add via CSV list of (name,address,hours)\n");
+	printf("\t -u - update hours via CSV list of (name,hours)\n");
+	printf("\t -r - remove employee via name\n");
 	printf("\t -l - list the employees\n");
 	return;
 }
@@ -22,6 +23,7 @@ int main(int argc, char *argv[]) {
 	char *filepath = NULL;
 	char *addstring = NULL;
 	char *removestring = NULL;
+	char *updatestring = NULL;
 	bool newfile = false;
 	bool list = false;
 	int c;
@@ -30,7 +32,7 @@ int main(int argc, char *argv[]) {
 	struct dbheader_t *dbhdr = NULL;
 	struct employee_t *employees = NULL;
 
-	while ((c = getopt(argc, argv, "nf:a:lr:")) != -1) {
+	while ((c = getopt(argc, argv, "nf:a:lr:u:")) != -1) {
 		switch (c) {
 			case 'n':
 				newfile = true;
@@ -46,6 +48,9 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'r':
 				removestring = optarg;
+				break;
+			case 'u':
+				updatestring = optarg;
 				break;
 			case '?':
 				printf("Unkown option -%c\n", c);
@@ -96,8 +101,15 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	if (updatestring != NULL) {
+		if (update_employee(dbhdr, employees, updatestring) == STATUS_ERROR) {
+			printf("Failed to update employee hours in database");
+			return -1;
+		}
+	}
+
 	if (removestring != NULL) {
-		if(remove_employee(dbhdr, &employees, removestring) == STATUS_ERROR) {
+		if (remove_employee(dbhdr, &employees, removestring) == STATUS_ERROR) {
 			printf("Failed to remove employee from database\n");
 			return -1;
 		}
